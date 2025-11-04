@@ -1,7 +1,6 @@
 import type { TrainingRound } from './types';
 
 const NUM_ROUNDS = 8;
-const PREP_TIME = 120; // 2 minutes
 
 /**
  * Generates a CO2 tolerance table.
@@ -11,20 +10,18 @@ const PREP_TIME = 120; // 2 minutes
  */
 export function generateCo2Table(personalBestInSeconds: number): TrainingRound[] {
   const table: TrainingRound[] = [];
-  const holdTime = Math.round(personalBestInSeconds * 0.5);
-  let recoveryTime = PREP_TIME;
+  const holdTime = Math.max(45, Math.round(personalBestInSeconds * 0.66));
+  const startPrepTime = holdTime + 60;
+  const decreaseStep = 15;
 
   for (let i = 1; i <= NUM_ROUNDS; i++) {
+    const prepTime = Math.max(15, startPrepTime - ((i-1) * decreaseStep));
     table.push({
       round: i,
-      prep: PREP_TIME,
+      prep: prepTime,
       hold: holdTime,
-      recovery: i === NUM_ROUNDS ? 0 : recoveryTime,
+      recovery: 0, // Recovery is handled as the prep time for the next round
     });
-    // Decrease recovery time for the next round, with a minimum of 15 seconds.
-    if (recoveryTime > 15) {
-      recoveryTime -= 15;
-    }
   }
 
   return table;
@@ -38,18 +35,17 @@ export function generateCo2Table(personalBestInSeconds: number): TrainingRound[]
  */
 export function generateO2Table(personalBestInSeconds: number): TrainingRound[] {
   const table: TrainingRound[] = [];
-  let holdTime = Math.round(personalBestInSeconds * 0.5);
-  const recoveryTime = PREP_TIME;
+  const startHoldTime = Math.max(30, Math.round(personalBestInSeconds * 0.5));
+  const recoveryTime = 120; // 2 minutes
+  const holdIncrement = 10;
 
   for (let i = 1; i <= NUM_ROUNDS; i++) {
     table.push({
       round: i,
-      prep: PREP_TIME,
-      hold: holdTime,
-      recovery: i === NUM_ROUNDS ? 0 : recoveryTime,
+      prep: recoveryTime,
+      hold: startHoldTime + ((i-1) * holdIncrement),
+      recovery: 0, // Recovery is handled as the prep time for the next round
     });
-    // Increase hold time for the next round
-    holdTime += 10;
   }
   
   return table;
